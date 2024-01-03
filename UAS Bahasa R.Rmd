@@ -1,9 +1,9 @@
 ---
 title: "UAS Bahasa R"
-author: "36220014-Wisely Yestin & 36220017 - Denis Winata DS"
+author: "36220014-Wisely Yestin & 36220017 - Denis Winata "
 ---
 
-#install packages
+##install packages
 install.packages('dplyr')
 install.packages('corrplot')
 install.packages('nortest')
