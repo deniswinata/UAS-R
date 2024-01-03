@@ -1,6 +1,6 @@
 ---
 title: "UAS Bahasa R"
-author: "36220014-Wisely Yestin & 36220017 - Denis Winata "
+author: "36220014-Wisely Yestin & 36220017 - Denis Winata DS"
 ---
 
 #install packages
@@ -362,4 +362,43 @@ precision_dt = conf_matrix_dt$byClass[["Pos Pred Value"]]
 # Display evaluation metrics
 print(paste("Decision Tree Accuracy:", accuracy_dt))
 print(paste("Decision Tree Precision:", precision_dt))
+```
+
+# Cross Validation Decision Tree
+```{r}
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define cross-validation parameters
+cv_folds = 5  # Number of folds for cross-validation
+
+# Create cross-validated Decision Tree model
+dt_model_cv = train(factor(LULUS) ~ .,
+                     data = train_data[, c("LULUS", predictors)],
+                     method = "rpart",
+                     trControl = trainControl(method = "cv", number = cv_folds, verboseIter = TRUE),
+                     tuneGrid = data.frame(cp = seq(0.01, 0.1, by = 0.01)))
+
+# Print model summary
+print(dt_model_cv)
+```
+
+# Curve ROC dan AUC Decision Tree
+```{r}
+# Calculate ROC
+roc_dt = roc(test_data$LULUS, as.numeric(predictions_dt))
+
+# Display evaluation metrics
+print(paste("Decision Tree Accuracy:", accuracy_dt))
+print(paste("Decision Tree Precision:", precision_dt))
+
+# Plot ROC curve for Decision Tree
+plot(roc_dt, col = "blue", main = "ROC Curve (Decision Tree)", lwd = 2)
+abline(h = seq(0, 1, 0.1), v = seq(0, 1, 0.1), col = "gray", lty = 3)
+
+# Menghitung AUC
+auc_dt = auc(roc_dt)
+print(paste("Decision Tree AUC:", auc_dt))
 ```
