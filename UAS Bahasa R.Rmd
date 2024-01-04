@@ -881,7 +881,6 @@ ui <- dashboardPage(
   )
 )
 
-
 server <- function(input, output, session) {
   observeEvent(input$predict, {
     predictions_IEDU <- predict(gbm_model, 
@@ -927,7 +926,7 @@ server <- function(input, output, session) {
 shinyApp(ui, server)
 ```
 
-#shiny
+#shiny versi simple
 ```{r}
 #VERSI SIMPLE
 library(shiny)
@@ -947,8 +946,8 @@ ui=fluidPage(
                   selected = "Ya"),
       numericInput("GRE", "Skor GRE", value = 0),
       numericInput("TOEFL", "Skor TOEFL", value = 0),
-      numericInput("MOT_LETTER", "Skor Motivation Letter (1-5)", value = 0),
-      numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5)", value = 0),
+      numericInput("MOT_LETTER", "Skor Motivation Letter (1-5) boleh koma", value = 0),
+      numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5) boleh koma", value = 0),
       actionButton("predict", "predict")
     ), 
     mainPanel(
@@ -981,5 +980,4 @@ server <- function(input, output) {
 }
 
 shinyApp(ui, server)
-
 ```
