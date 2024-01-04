@@ -659,7 +659,7 @@ probabilities_gbm <- 1 / (1 + exp(-predictions_gbm))
 predicted_classes_gbm <- ifelse(probabilities_gbm > 0.5, "Lulus", "Tidak Lulus")
 
 # Evaluate the model
-conf_matrix = confusionMatrix(factor(predicted_classes_gbm), test_data$LULUS)
+conf_matrix_gbm = confusionMatrix(factor(predicted_classes_gbm), test_data$LULUS)
 accuracy_gbm = conf_matrix_gbm$overall["Accuracy"]
 precision_gbm = conf_matrix_gbm$byClass[["Pos Pred Value"]]
 
@@ -722,9 +722,9 @@ library(pROC)
 # Plot ROC curves for each model
 plot(roc_rf, col = "blue", main = "Merge ROC Curves", lwd = 2, cex.main = 1.5, cex.lab = 1.2, cex.axis = 1.2)
 lines(roc_dt, col = "red", lwd = 2)
-lines(roc_svm, col = "green", lwd = 2)
+lines(roc_svm_reg, col = "green", lwd = 2)
 lines(roc_knn, col = "purple", lwd = 2)
-lines(roc_nb, col = "orange", lwd = 2)
+lines(roc_nb_reg, col = "orange", lwd = 2)
 lines(roc_lr, col = "yellow", lwd = 2 )
 lines(roc_gbm, col = "skyblue", lwd = 2)
 
@@ -737,7 +737,7 @@ legend("bottomright", legend = c("Random Forest", "Decision Tree", "SVM", "KNN",
 # Visualisasi Perbandingan Hasil Auc Setiap Model
 ```{r}
 # Perbandingan AUC Setiap Model
-model_auc <- c(auc(roc_rf), auc(roc_dt), auc(roc_svm), auc(roc_knn), auc(roc_nb), auc(roc_lr), auc(roc_gbm))
+model_auc <- c(auc(roc_rf), auc(roc_dt), auc(roc_svm_reg), auc(roc_knn), auc(roc_nb_reg), auc(roc_lr), auc(roc_gbm))
 
 # Visualisasi dengan bar plot
 barplot(model_auc, names.arg = c("Random Forest", "Decision tree", "SVM", "KNN", "Naive Bayes", "Logistic","GBM"),
@@ -784,9 +784,9 @@ ggplot(model_metrics_melted, aes(x = Model, y = Value, fill = Metric)) +
 # angka disini dalam persen semua
 # decision tree= akurasi 95, presisi 96, AUC 92,5
 # knn = akurasi 93, presisi 96, AUC 90,4
-# svm= akurasi 97, presisi 96, AUC 81,1
+# svm= akurasi 97, presisi 96, AUC 95,7
 # random forest= akurasi 94, presisi 96, AUC 93,2
-# naive bayes= akurasi 96, presisi 90, AUC 96,2
+# naive bayes= akurasi 96, presisi 90, AUC 97,9
 # logistic regression = akurasi 94, presisi 89, AUC 99,2
 # Gradient Boosting Machine = akurasi 96, presisi 93, AUC 99,2
 
@@ -933,6 +933,7 @@ library(shiny)
 library(shinydashboard)
 library(e1071)
 library(shinyjs)
+library(shinythemes)
 
 gbm_model <- gbm(LULUS ~ ., data = train_data_gbm[, c("LULUS", predictors)], distribution = "bernoulli", n.trees = 100, interaction.depth = 3)
 
