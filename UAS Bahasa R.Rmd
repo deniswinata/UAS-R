@@ -598,6 +598,7 @@ precision_lr = conf_matrix_lr$byClass[["Pos Pred Value"]]
 print(paste("Logistic Regression Accuracy:", accuracy_lr))
 print(paste("Logistic Regression Precision:", precision_lr))
 ```
+
 # Cross Validation Logistic Regression
 ```{r}
 library(caret)
@@ -620,6 +621,7 @@ lr_model_cv <- train(
 # Print model summary
 print(lr_model_cv)
 ```
+
 # Curve ROC dan AUC Logistic Regression
 ```{r}
 # Calculate ROC
@@ -665,6 +667,7 @@ precision_gbm = conf_matrix_gbm$byClass[["Pos Pred Value"]]
 print(paste("GBM Accuracy:", accuracy_gbm))
 print(paste("GBM Precision:", precision_gbm))
 ```
+
 # Cross Validation GBM
 ```{r}
 # Load necessary library
@@ -693,6 +696,7 @@ gbm_model_cv = train(
 # Print model summary
 print(gbm_model_cv)
 ```
+
 # Curve ROC dan AUC GBM
 ```{r}
 # Calculate ROC
@@ -710,6 +714,7 @@ abline(h = seq(0, 1, 0.1), v = seq(0, 1, 0.1), col = "gray", lty = 3)
 auc_gbm <- auc(roc_gbm)
 print(paste("GBM AUC:", auc_gbm))
 ```
+
 # Merge Curve ROC Every Model
 ```{r}
 library(pROC)
@@ -773,6 +778,7 @@ ggplot(model_metrics_melted, aes(x = Model, y = Value, fill = Metric)) +
   theme_minimal() +
   geom_text(aes(label = sprintf("%.2f", Value), y = Value), vjust = -0.5, position = position_dodge(width = 0.9))
 ```
+
 # Narasi Hasil Evaluasi performa model-model tersebut dengan melakukan evaluasi baik pada data training dan data testing dengan metric precision.
 
 # angka disini dalam persen semua
