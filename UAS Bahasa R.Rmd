@@ -574,7 +574,142 @@ abline(h = seq(0, 1, 0.1), v = seq(0, 1, 0.1), col = "gray", lty = 3)
 auc_nb_reg = auc(roc_nb_reg)
 print(paste("Naive Bayes AUC:", auc_nb_reg))
 ```
+# Model Logistic Regresion
+```{r}
+# Convert Levels 
+train_data_lr <- train_data %>%
+  mutate(LULUS = ifelse(LULUS == "Lulus", 1, 0))
 
+# Model Logistic Regresion
+lr_model = glm(LULUS ~ ., data = train_data_lr[, c("LULUS", predictors)], family = "binomial")
+
+# Model Prediction
+predictions_lr = predict(lr_model, newdata = test_data, type = "response")
+
+# Convert predicted probabilities to class labels
+predicted_classes_lr = ifelse(predictions_lr > 0.5, "Lulus", "Tidak Lulus")
+
+# Evaluate the model
+conf_matrix_lr <- confusionMatrix(factor(predicted_classes_lr), test_data$LULUS)
+accuracy_lr = conf_matrix_lr$overall["Accuracy"]
+precision_lr = conf_matrix_lr$byClass[["Pos Pred Value"]]
+
+# Display evaluation metrics
+print(paste("Logistic Regression Accuracy:", accuracy_lr))
+print(paste("Logistic Regression Precision:", precision_lr))
+```
+# Cross Validation Logistic Regression
+```{r}
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define cross-validation parameters
+cv_folds = 5  # Number of folds for cross-validation
+
+# Create cross-validated logistic regression model
+lr_model_cv <- train(
+  LULUS ~ .,
+  data = train_data_lr[, c("LULUS", predictors)],
+  method = "glm",
+  family = "binomial",
+  trControl = trainControl(method = "cv", number = cv_folds)
+)
+
+# Print model summary
+print(lr_model_cv)
+```
+# Curve ROC dan AUC Logistic Regression
+```{r}
+# Calculate ROC
+roc_lr <- roc(test_data$LULUS, predictions_lr)
+
+# Display evaluation metrics
+print(paste("Logistic Regression Accuracy:", accuracy_lr))
+print(paste("Logistic Regression Precision:", precision_lr))
+
+# Plot ROC curve for Logistic Regression
+plot(roc_lr, col = "blue", main = "ROC Curve (Logistik Regression)", lwd = 2)
+abline(h = seq(0, 1, 0.1), v = seq(0, 1, 0.1), col = "gray", lty = 3)
+
+# Menghitung AUC
+auc_lr <- auc(roc_lr)
+print(paste("Logistic Regression AUC:", auc_lr))
+```
+
+# Model GBM
+```{r}
+# Convert Levels 
+train_data_gbm <- train_data %>%
+  mutate(LULUS = ifelse(LULUS == "Lulus", 1, 0))
+
+# Model Gradient Boosting Machine (GBM)
+gbm_model <- gbm(LULUS ~ ., data = train_data_gbm[, c("LULUS", predictors)], distribution = "bernoulli", n.trees = 100, interaction.depth = 3)
+
+# Model Prediction
+predictions_gbm <- predict(gbm_model, newdata = test_data, n.trees = 100)
+
+# Convert predicted values to probabilities
+probabilities_gbm <- 1 / (1 + exp(-predictions_gbm))
+
+# Convert predicted probabilities to class labels
+predicted_classes_gbm <- ifelse(probabilities_gbm > 0.5, "Lulus", "Tidak Lulus")
+
+# Evaluate the model
+conf_matrix = confusionMatrix(factor(predicted_classes_gbm), test_data$LULUS)
+accuracy_gbm = conf_matrix_gbm$overall["Accuracy"]
+precision_gbm = conf_matrix_gbm$byClass[["Pos Pred Value"]]
+
+# Display evaluation metrics
+print(paste("GBM Accuracy:", accuracy_gbm))
+print(paste("GBM Precision:", precision_gbm))
+```
+# Cross Validation GBM
+```{r}
+# Load necessary library
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Convert Levels
+train_data_gbm <- train_data %>%
+  mutate(LULUS = ifelse(LULUS == "Lulus", 1, 0))
+
+# Define cross-validation parameters
+cv_folds = 5  # Number of folds for cross-validation
+
+# Create cross-validated GBM model
+gbm_model_cv = train(
+  factor(LULUS) ~ .,
+  data = train_data_gbm[, c("LULUS", predictors)],
+  method = "gbm",
+  distribution = "bernoulli",
+  trControl = trainControl(method = "cv", number = cv_folds),
+  verbose = FALSE  # Set to TRUE for more detailed output
+)
+
+# Print model summary
+print(gbm_model_cv)
+```
+# Curve ROC dan AUC GBM
+```{r}
+# Calculate ROC
+roc_gbm <- roc(test_data$LULUS, probabilities_gbm)
+
+# Display evaluation metrics
+print(paste("GBM Accuracy:", accuracy_gbm))
+print(paste("GBM Precision:", precision_gbm))
+
+# Plot ROC curve for GBM
+plot(roc_gbm, col = "blue", main = "ROC Curve (GBM)", lwd = 2)
+abline(h = seq(0, 1, 0.1), v = seq(0, 1, 0.1), col = "gray", lty = 3)
+
+# Menghitung AUC
+auc_gbm <- auc(roc_gbm)
+print(paste("GBM AUC:", auc_gbm))
+```
 # Merge Curve ROC Every Model
 ```{r}
 library(pROC)
@@ -585,27 +720,29 @@ lines(roc_dt, col = "red", lwd = 2)
 lines(roc_svm, col = "green", lwd = 2)
 lines(roc_knn, col = "purple", lwd = 2)
 lines(roc_nb, col = "orange", lwd = 2)
+lines(roc_lr, col = "yellow", lwd = 2 )
+lines(roc_gbm, col = "skyblue", lwd = 2)
 
 # Add legend
-legend("bottomright", legend = c("Random Forest", "Decision Tree", "SVM", "KNN", "Naive Bayes"),
-       col = c("blue", "red", "green", "purple", "orange"), lwd = 2)
+legend("bottomright", legend = c("Random Forest", "Decision Tree", "SVM", "KNN", "Naive Bayes", "Logistic", "GBM"),
+       col = c("blue", "red", "green", "purple", "orange", "yellow", "skyblue"), lwd = 2)
 
 ```
 
 # Visualisasi Perbandingan Hasil Auc Setiap Model
 ```{r}
 # Perbandingan AUC Setiap Model
-model_auc <- c(auc(roc_rf), auc(roc_dt), auc(roc_svm), auc(roc_knn), auc(roc_nb))
+model_auc <- c(auc(roc_rf), auc(roc_dt), auc(roc_svm), auc(roc_knn), auc(roc_nb), auc(roc_lr), auc(roc_gbm))
 
 # Visualisasi dengan bar plot
-barplot(model_auc, names.arg = c("Random Forest", "Decision tree", "SVM", "KNN", "Naive Bayes"),
-        col = c("blue", "red", "green", "purple", "orange"),
+barplot(model_auc, names.arg = c("Random Forest", "Decision tree", "SVM", "KNN", "Naive Bayes", "Logistic","GBM"),
+        col = c("blue", "red", "green", "purple", "orange","yellow","skyblue"),
         main = "Perbandingan AUC Setiap Model",
-        xlab = "Model", ylab = "AUC", ylim = c(0, 1),
-        cex.main = 1, cex.lab = 1, cex.axis = 1)
+        xlab = "Model", ylab = "AUC", ylim = c(0, 1.1),
+        cex.main = 0.7, cex.lab = 0.7, cex.axis = 0.7)
 
 # Menambahkan nilai AUC di atas batang
-text(seq_along(model_auc), model_auc + 0.02, labels = sprintf("%.3f", model_auc),
+text(seq_along(model_auc), model_auc + 0.01, labels = sprintf("%.3f", model_auc),
      cex = 0.8, col = "black", pos = 4)
 
 ```
@@ -615,9 +752,9 @@ text(seq_along(model_auc), model_auc + 0.02, labels = sprintf("%.3f", model_auc)
 library(ggplot2)
 
 # Define model names and evaluation metrics
-model_names = c("Random Forest", "Decision Tree", "SVM", "KNN", "Naive Bayes")
-accuracies = c(accuracy_rf, accuracy_dt, accuracy_svm_reg, accuracy_knn, accuracy_nb_reg)
-precisions = c(precision_rf, precision_dt, precision_svm_reg, precision_knn, precision_nb_reg)
+model_names = c("Random Forest", "Decision Tree", "SVM", "KNN", "Naive Bayes", " Logistic", "GBM")
+accuracies = c(accuracy_rf, accuracy_dt, accuracy_svm_reg, accuracy_knn, accuracy_nb_reg, accuracy_lr, accuracy_gbm)
+precisions = c(precision_rf, precision_dt, precision_svm_reg, precision_knn, precision_nb_reg, precision_lr, precision_gbm)
 
 # Create a data frame for visualization
 model_metrics = data.frame(Model = model_names, Accuracy = accuracies, Precision = precisions)
@@ -635,73 +772,71 @@ ggplot(model_metrics_melted, aes(x = Model, y = Value, fill = Metric)) +
   scale_fill_manual(values = c("Accuracy" = "skyblue", "Precision" = "coral")) +
   theme_minimal() +
   geom_text(aes(label = sprintf("%.2f", Value), y = Value), vjust = -0.5, position = position_dodge(width = 0.9))
-
 ```
 # Narasi Hasil Evaluasi performa model-model tersebut dengan melakukan evaluasi baik pada data training dan data testing dengan metric precision.
-# decision tree= akurasi 95, presisi 96, AUC 52,4
-# knn = akurasi 93, presisi 96, AUC 89
+
+# angka disini dalam persen semua
+# decision tree= akurasi 95, presisi 96, AUC 92,5
+# knn = akurasi 93, presisi 96, AUC 90,4
 # svm= akurasi 97, presisi 96, AUC 81,1
 # random forest= akurasi 94, presisi 96, AUC 93,2
 # naive bayes= akurasi 96, presisi 90, AUC 96,2
+# logistic regression = akurasi 94, presisi 89, AUC 99,2
+# Gradient Boosting Machine = akurasi 96, presisi 93, AUC 99,2
 
-# AUC mengukur area di bawah kurva ROC. Nilai AUC berkisar antara 0 hingga 1, di mana nilai 1 menunjukkan kinerja sempurna dan nilai 0.5 menunjukkan kinerja yang setara dengan pengacakan acak.
+#IEDU, sebuah konsultan pendidikan di Jakarta, berusaha meningkatkan pelayanan konsultasi untuk calon pendaftar program MBA di University of Universe (UoU). Tujuan utama adalah memberikan saran yang tepat kepada calon pendaftar untuk meningkatkan tingkat kelulusan, yang saat ini hanya sekitar 30%. Dengan data historis yang dimiliki IEDU, termasuk dataset profil calon pendaftar dan hasil kelulusan, mereka ingin mengembangkan alat prediktif untuk memprediksi kelulusan dengan tingkat presisi minimal 85%.
+
+#Features yang Dipilih 
+#Berikut adalah features yang dipilih untuk membangun model prediktif:
+
+# IPK: Indikator kinerja akademis calon mahasiswa, berkorelasi dengan keberhasilan studi lanjutan.
+# Pengalaman Riset (RISET): Mencerminkan dedikasi dan keterampilan penelitian, penting jika UoU memiliki fokus pada aspek riset.
+# GRE dan TOEFL: Standar untuk melihat kemampuan akademis dan kemahiran berbahasa Inggris.
+# Surat Rekomendasi (REKOM_LETTER) dan Motivation Letter (MOT_LETTER): Memberikan wawasan tentang kemampuan interpersonal dan motivasi calon mahasiswa.
+# Ranking Universitas Asal S1
+
+# Confusion Matrix dan Presisi
+
+# Confusion matrix adalah alat evaluasi kinerja model yang memvisualisasikan hasil prediksi. Terdapat empat kategori:
+
+# True Positive (TP): Jumlah calon yang berhasil diprediksi benar.
+# False Positive (FP): Jumlah calon yang sebenarnya tidak berhasil tetapi diprediksi berhasil.
+# True Negative (TN): Jumlah calon yang tidak berhasil diprediksi benar.
+# False Negative (FN): Jumlah calon yang sebenarnya berhasil tetapi diprediksi tidak berhasil.
+# Presisi mengukur sejauh mana prediksi positif benar atau relevan dan dihitung sebagai TP / (TP + FP). IEDU menetapkan target presisi sebesar 85%, menginginkan minimal jumlah prediksi positif yang salah.
+
+# Presisi adalah salah satu metrik evaluasi model yang mengukur proporsi dari prediksi positif yang benar (True Positive) dibandingkan dengan total prediksi positif (True Positive + False Positive). Dalam konteks klasifikasi, presisi memberikan gambaran sejauh mana prediksi positif yang diberikan oleh model benar atau relevan.
+
+# Presisi berguna ketika fokus pada pengurangan jumlah prediksi positif yang salah. Misalnya, dalam kasus IEDU, jika model memberikan saran untuk melanjutkan aplikasi MBA di UoU, IEDU ingin memastikan bahwa prediksi tersebut memiliki tingkat ketepatan yang tinggi, minimal 85%. Artinya, IEDU ingin meminimalkan jumlah prediksi positif yang salah.
+
+# Menggunakan features yang dipilih, IEDU berharap model dapat memberikan saran yang lebih akurat kepada calon pendaftar program MBA di UoU, dengan tingkat presisi yang memenuhi target.
+
+# AUC mengukur area di bawah kurva ROC. Nilai AUC berkisar antara 0 hingga 1, di mana nilai 1 menunjukkan kinerja sempurna dan nilai 0.5 atau 50 menunjukkan kinerja yang setara dengan pengacakan acak.
 
 # Semakin besar nilai AUC, semakin baik model dapat membedakan antara kelas positif dan negatif. Jadi model dengan AUC tertinggi dianggap sebagai model yang lebih baik dalam membedakan antara kelas positif dan negatif.
 
-# Menurut kami setelah mengevaluasi performa berbagai model, kami berkesimpulan bahwa SVM adalah pilihan terbaik untuk digunakan dalam web Shiny kami. Meskipun Naive Bayes menunjukkan presisi yang baik sebesar 90%, yang memenuhi standar IEDU sebesar 85%, SVM memiliki keunggulan dalam beberapa aspek penting. 
-# SVM memiliki akurasi yang sangat tinggi, mencapai 97%, yang membuatnya menjadi model yang dapat diandalkan untuk memprediksi keberhasilan pendaftaran program MBA UoU. Selain itu, presisi SVM sebesar 96% dan naive bayes 90%, namun masih memenuhi target presisi yang ditetapkan oleh IEDU yaitu 85%. 
-# Meskipun AUC Naive Bayes lebih tinggi daripada SVM (81.1% vs. 96.2%), kami lebih memilih SVM karena perbedaan AUC yang tidak signifikan dan SVM menunjukkan keunggulan yang lebih besar dalam hal akurasi dan presisi. Dan skor AUC 81,1% menurut kami sudah dapat meununjukan model dapat membedakan antara kelas positif dan negatif. Oleh karena itu, SVM dianggap sebagai model terbaik untuk konteks membantu IEDU memberikan saran yang lebih tepat kepada calon pendaftar program MBA UoU. 
+# Menurut kami setelah mengevaluasi performa berbagai model, kami berkesimpulan bahwa GBM adalah pilihan terbaik untuk digunakan dalam web Shiny kami. Meskipun Logistic Regression menunjukkan presisi yang baik sebesar 89%, yang memenuhi standar IEDU sebesar 85%, GBM memiliki keunggulan dalam beberapa aspek penting. 
 
-#shiny
-```{r}
-#VERSI SIMPLE
-library(shiny)
-library(shinydashboard)
-library(e1071)
-library(shinyjs)
+# GBM memiliki akurasi yang sangat tinggi, mencapai 96%, yang membuatnya menjadi model yang dapat diandalkan untuk memprediksi keberhasilan pendaftaran program MBA UoU. Selain itu, presisi GBM sebesar 96% dan Logistic Regression 89%, namun masih memenuhi target presisi yang ditetapkan oleh IEDU yaitu 85%. 
 
-svm_reg_model = svm(LULUS ~ ., data = train_data[, c("LULUS", predictors)])
+# GBM AUC: 0.992454728370221 vs Logistic Regression AUC: 0.991951710261569
 
-ui=fluidPage(
-  titlePanel('IEDU Prediction Tool'),
-  sidebarLayout(
-    sidebarPanel(
-      numericInput('Ranking_Uni_Asal','Ranking Uni Asal (1-5)', value=1),
-      numericInput('IPK','IPK (0-4) boleh koma: ', value=0),
-      textInput('RISET','RISET (Ya/Tidak):' ),
-      numericInput("GRE", "Skor GRE", value = 0),
-      numericInput("TOEFL", "Skor TOEFL", value = 0),
-      numericInput("MOT_LETTER", "Skor Motivation Letter (1-5)", value = 0),
-      numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5)", value = 0),
-      actionButton('predict', 'predict')
-    ), 
-    mainPanel(
-      textOutput('hasil')
-    )
-  )
-)
-server = function(input,output){
-  observeEvent(input$predict, {
-    predictions_IEDU= predict(svm_reg_model, newdata=data.frame(Ranking_Uni_Asal=input$Ranking_Uni_Asal, IPK=input$IPK, RISET=input$RISET, GRE=input$GRE, TOEFL=input$TOEFL, MOT_LETTER=input$MOT_LETTER, REKOM_LETTER=input$REKOM_LETTER))
-    output$hasil= renderText({paste('Hasil Prediksi IEDU Anda adalah: ',predictions_IEDU)})
-  })
-}
+# Kami merekomendasi GBM karena AUC menang sedikit dengan Logistic Regression dan GBM menunjukkan keunggulan yang dalam hal akurasi dan presisi. Dan skor AUC 99,2% menurut kami sudah dapat meununjukan model dapat membedakan antara kelas positif dan negatif. Oleh karena itu, GBM dianggap sebagai model terbaik untuk konteks membantu IEDU memberikan saran yang lebih tepat kepada calon pendaftar program MBA UoU.
 
-shinyApp(ui, server)
 
-```
-
+# shiny versi bagus
 ```{r}
 #VERSI BAGUS
 library(shiny)
 library(shinydashboard)
 library(e1071)
 library(shinyjs)
+library(shinythemes)
 
-svm_reg_model = svm(LULUS ~ ., data = train_data[, c("LULUS", predictors)])
+gbm_model <- gbm(LULUS ~ ., data = train_data_gbm[, c("LULUS", predictors)], distribution = "bernoulli", n.trees = 100, interaction.depth = 3)
 
 # Define UI
-ui = dashboardPage(
+ui <- dashboardPage(
   dashboardHeader(
     title = "IEDU Prediction Tool",
     titleWidth = 450, # Set width to accommodate subtitle
@@ -713,36 +848,132 @@ ui = dashboardPage(
   
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Input Data Diri", tabName = "input", icon = icon("dashboard"))
+      menuItem("Input Data Diri", tabName = "input", icon = icon("list-alt"))
     )
   ),
   
   dashboardBody(
     useShinyjs(), # Aktifkan shinyjs
     
- sidebarLayout(
-    sidebarPanel(
-      numericInput('Ranking_Uni_Asal','Ranking Uni Asal (1-5)', value=1),
-      numericInput('IPK','IPK (0-4) boleh koma: ', value=0),
-      textInput('RISET','RISET (Ya/Tidak):' ),
-      numericInput("GRE", "Skor GRE", value = 0),
-      numericInput("TOEFL", "Skor TOEFL", value = 0),
-      numericInput("MOT_LETTER", "Skor Motivation Letter (1-5)", value = 0),
-      numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5)", value = 0),
-      actionButton('predict', 'predict')
-    ), 
-    mainPanel(
-      textOutput('hasil')
+    sidebarLayout(
+      sidebarPanel(
+        textInput("NAMA", "Masukkan Nama Anda"),
+        numericInput("Ranking_Uni_Asal", "Ranking Uni Asal (1-5)", value = 1),
+        numericInput("IPK", "IPK (0-4) boleh koma:", value = 0),
+        selectInput("RISET", "Apakah Anda Melakukan Riset Sebelumnya",choices = c("Ya", "Tidak"), selected = "Ya"),
+        numericInput("GRE", "Skor GRE", value = 0),
+        numericInput("TOEFL", "Skor TOEFL", value = 0),
+        numericInput("MOT_LETTER", "Skor Motivation Letter (1-5) boleh koma", value = 0),
+        numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5) boleh koma", value = 0),
+        actionButton("predict", "Predict")
+      ), 
+      mainPanel(
+        style = "padding: 20px;",
+        textOutput("hasil")
+      )
     )
   )
-))
+)
 
-server = function(input,output){
+
+server <- function(input, output, session) {
   observeEvent(input$predict, {
-    predictions_IEDU= predict(svm_reg_model, newdata=data.frame(Ranking_Uni_Asal=input$Ranking_Uni_Asal, IPK=input$IPK, RISET=input$RISET, GRE=input$GRE, TOEFL=input$TOEFL, MOT_LETTER=input$MOT_LETTER, REKOM_LETTER=input$REKOM_LETTER))
-    output$hasil= renderText({paste('Hasil Prediksi IEDU Anda adalah: ',predictions_IEDU)})
+    predictions_IEDU <- predict(gbm_model, 
+                                newdata = data.frame(
+                                  Ranking_Uni_Asal = input$Ranking_Uni_Asal,
+                                  IPK = input$IPK,
+                                  RISET = input$RISET,
+                                  GRE = input$GRE,
+                                  TOEFL = input$TOEFL,
+                                  MOT_LETTER = input$MOT_LETTER,
+                                  REKOM_LETTER = input$REKOM_LETTER
+                                ),
+                                n.trees = 100, interaction.depth = 3, type = "response")
+    
+    # Check if prediction is greater than 0.5
+    result <- ifelse(predictions_IEDU > 0.5, "LULUS", "TIDAK LULUS")
+    
+    output$hasil <- renderText({
+      paste("Hasil Prediksi IEDU Anda adalah: ", result)
+    })
+    
+    # Determine the label output based on the prediction
+    output_label <- ifelse(predictions_IEDU > 0.5, 
+                           paste("SELAMAT", input$NAMA, ", ANDA LULUS"), 
+                           paste("MOHON MAAF", input$NAMA, ", ANDA BELUM LULUS"))
+
+    # Determine background color based on the prediction
+    background_color <- ifelse(predictions_IEDU > 0.5, "green", "red")
+
+    # Prepare HTML with inline CSS to set background color and center text
+     hasil_html <- sprintf('<div style="background-color:%s; padding:20px; border-radius: 10px; text-align: center;">%s</div>', 
+                          background_color, output_label)
+
+    # Display the result in a modal dialog with HTML
+    showModal(modalDialog(
+      HTML(hasil_html),
+      easyClose = TRUE,
+      footer = NULL
+    ))
   })
 }
 
 shinyApp(ui, server)
+```
+
+#shiny
+```{r}
+#VERSI SIMPLE
+library(shiny)
+library(shinydashboard)
+library(e1071)
+library(shinyjs)
+
+gbm_model <- gbm(LULUS ~ ., data = train_data_gbm[, c("LULUS", predictors)], distribution = "bernoulli", n.trees = 100, interaction.depth = 3)
+
+ui=fluidPage(
+  titlePanel("IEDU Prediction Tool"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput("Ranking_Uni_Asal","Ranking Uni Asal (1-5)", value=1),
+      numericInput("IPK","IPK (0-4) boleh koma: ", value=0),
+       selectInput("RISET", "Apakah Anda Melakukan Riset Sebelumnya", choices = c("Ya", "Tidak"), 
+                  selected = "Ya"),
+      numericInput("GRE", "Skor GRE", value = 0),
+      numericInput("TOEFL", "Skor TOEFL", value = 0),
+      numericInput("MOT_LETTER", "Skor Motivation Letter (1-5)", value = 0),
+      numericInput("REKOM_LETTER", "Skor Rekomendasi Letter (1-5)", value = 0),
+      actionButton("predict", "predict")
+    ), 
+    mainPanel(
+      textOutput("hasil")
+    )
+  )
+)
+
+server <- function(input, output) {
+  observeEvent(input$predict, {
+    predictions_IEDU <- predict(gbm_model, 
+                                newdata = data.frame(
+                                  Ranking_Uni_Asal = input$Ranking_Uni_Asal,
+                                  IPK = input$IPK,
+                                  RISET = input$RISET,
+                                  GRE = input$GRE,
+                                  TOEFL = input$TOEFL,
+                                  MOT_LETTER = input$MOT_LETTER,
+                                  REKOM_LETTER = input$REKOM_LETTER
+                                ),
+                                n.trees = 100, interaction.depth = 3, type = "response")
+    
+    # Check if prediction is greater than 0.5
+    result <- ifelse(predictions_IEDU > 0.5, "LULUS", "TIDAK LULUS")
+    
+    output$hasil <- renderText({
+      paste("Hasil Prediksi IEDU Anda adalah: ", result)
+    })
+  })
+}
+
+shinyApp(ui, server)
+
 ```
